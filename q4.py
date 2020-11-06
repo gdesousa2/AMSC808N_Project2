@@ -57,43 +57,27 @@ plt.savefig(f'p4/PCA_2_{k1}_words.png')
 ############################
 # CHOOSING IMPORTANT WORDS #
 ############################
-# Remove words that apprear a lot in both documents
-# Choose 5000 words that appear a lot in Florida but not in Indiana
-# Choose 5000 words that appear a lot in Indiana but not in Florida
-cmax = np.max(M,0)/np.sum(Mlogic,0)
-cmean = np.sum(M,0)/np.sum(Mlogic,0)
-ind_mean_keep = np.argwhere(cmean < cmean[0]*1.5)[:,0]
-ind_max_keep = np.argwhere(cmax < cmax[0]*1.5)[:,0]
+# Choose the words that are more distant in one category and another
+k2 = 10000
 
-score_F = np.sum(Mlogic[ind_Flor,:],0)/len(ind_Flor)
-score_I = np.sum(Mlogic[ind_Ind,:],0)/len(ind_Ind)
+score_F = np.sum(M[ind_Flor,:],0)/len(ind_Flor)
+score_I = np.sum(M[ind_Ind,:],0)/len(ind_Ind)
 w_F = np.argsort(score_F)[::-1]
 w_I = np.argsort(score_I)[::-1]
 
-k2 = 10000
-q2 = 5
+word_diff = np.zeros(d, dtype='int64')
+for i in range(d):
+    indF = np.argwhere(w_F == i)
+    indI = np.argwhere(w_I == i)
 
-words_Flor = []
-words_Ind = []
-for i in range(len(w_F)):
-    index = np.argwhere(w_I == w_F[i])[0][0]
-    if np.abs(i - index) > 3000:
-        words_Flor.append(w_F[i])
-        words_Ind.append(index)
-#words_Flor = words_Flor
-#words_Ind = words_Ind
-words = list(set(words_Flor + words_Ind))[:k2]
-
-# Leverage score for 10000-words
-M2 = M[:,ind_mean_keep]
-U2,S2,V2 = svd(M2)
-pk2 = np.sum(V2[:k2,:]**2, 0)/k2
-pi_k2 = pk2.argsort()[::-1][:q2] # largest leverage score
+    word_diff[i] = np.abs(indF - indI)
+words = np.argsort(word_diff)[::-1][:10000]
 
 # PCA for k-words
+M2 = M[:,words]
+U2,S2,V2 = svd(M2)
 n_comp = 2
 PCA_words_k2 = [M2@V2.T[:,i] for i in range(n_comp)]
-#PCA_words_k2 = [M2[:,pi_k2]@V2.T[pi_k2,i] for i in range(n_comp)]
 
 # Plotting
 plt.figure()
